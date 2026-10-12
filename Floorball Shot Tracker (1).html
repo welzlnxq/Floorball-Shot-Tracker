@@ -1,0 +1,263 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Floorball Shot Tracker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6f8;--card:#fff;--text:#1b2733;--muted:#5d6b78;--line:#d5dce2;
+--green:#22a447;--red:#e04545;--blue:#2f7de1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12181e;--card:#1c242c;--text:#eef2f5;--muted:#9aa8b4;--line:#33414d}}
+:root[data-theme="dark"]{--bg:#12181e;--card:#1c242c;--text:#eef2f5;--muted:#9aa8b4;--line:#33414d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:.92rem}
+.main{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.court-col{flex:1 1 380px;min-width:0}
+.side{flex:0 1 240px;min-width:220px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.picker{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.pick{flex:1 1 90px;border:3px solid transparent;border-radius:12px;padding:10px 6px;font-size:.95rem;font-weight:600;color:#fff;cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;min-height:44px;font-family:inherit}
+.pick.g{background:var(--green)}.pick.r{background:var(--red)}.pick.b{background:var(--blue)}.pick.k{background:#111;box-shadow:0 0 0 1px #8a96a0}
+.pick.active{border-color:var(--text);transform:scale(1.04)}
+svg{width:100%;height:auto;display:block;border-radius:12px;touch-action:manipulation;cursor:crosshair}
+.stat{display:flex;align-items:center;gap:12px}
+.dot{width:18px;height:18px;border-radius:50%;flex:none}
+.stat .n{font-size:2.2rem;font-weight:700;line-height:1;margin-left:auto}
+.stat .l{font-weight:600}
+.total .n{font-size:1.8rem}
+.acc{display:flex;justify-content:space-between;font-size:.95rem;color:var(--muted)}
+.acc b{color:var(--text)}
+.btns{display:flex;gap:8px}
+.btns button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:.95rem;cursor:pointer}
+.hint{font-size:.82rem;color:var(--muted);margin:8px 2px 0}
+.players{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pl{flex:1 1 150px;display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:8px 10px}
+.pl.active{border-color:var(--text)}
+.pl .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--muted);color:#fff;font-weight:700;display:grid;place-items:center;font-size:.9rem}
+.pl.active .num{background:var(--text);color:var(--bg)}
+.pl input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font-size:1rem;padding:4px 2px;outline:none}
+.pl input:focus{border-bottom-color:var(--text)}
+.pt{width:100%;border-collapse:collapse;font-size:.9rem}
+.pt th,.pt td{padding:5px 4px;text-align:center}
+.pt th:first-child{text-align:left;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt td{font-weight:700}
+.pt .dot{width:12px;height:12px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Floorball Shot Tracker</h1>
+  <div class="sub"><strong>Instructions for observer:</strong>
+    <ol style="margin:4px 0 0;padding-left:20px;line-height:1.5">
+      <li>Input the 3 attacking players' names.</li>
+      <li>Observe the gameplay and the attacking team's advancement towards the goal.</li>
+      <li>When a shot is made by any of the attacking players:
+        <ol type="i" style="margin:2px 0 0;padding-left:20px">
+          <li>note the result</li>
+          <li>select the corresponding button</li>
+          <li>indicate on the court roughly where the shot was made</li>
+        </ol>
+      </li>
+      <li>If possession is lost by the attacking team before a shot was made, indicate it on the court.</li>
+    </ol>
+  </div>
+  <div class="players" id="players">
+    <div class="pl"><input type="text" maxlength="20" placeholder="Player 1" aria-label="Player 1 name"></div>
+    <div class="pl"><input type="text" maxlength="20" placeholder="Player 2" aria-label="Player 2 name"></div>
+    <div class="pl"><input type="text" maxlength="20" placeholder="Player 3" aria-label="Player 3 name"></div>
+  </div>
+  <div class="main">
+    <div class="court-col">
+      <div class="picker" id="picker">
+        <button class="pick g active" data-t="g">Shot in Goal</button>
+        <button class="pick r" data-t="r">Shot on target (blocked)</button>
+        <button class="pick b" data-t="b">Shot off target</button>
+        <button class="pick k" data-t="k">Possession lost</button>
+      </div>
+      <svg id="court" viewBox="0 0 400 420" role="img" aria-label="Half floorball court">
+        <rect x="0" y="0" width="400" height="420" fill="#2c5f8a"/>
+        <rect x="0" y="0" width="400" height="400" rx="50" fill="#3f7fae" stroke="#16324a" stroke-width="6"/>
+        <rect x="0" y="360" width="400" height="40" fill="#3f7fae"/>
+        <line x1="3" y1="400" x2="397" y2="400" stroke="#fff" stroke-width="3"/>
+        <rect x="150" y="3" width="100" height="80" fill="none" stroke="#fff" stroke-width="2.5"/>
+        <rect x="175" y="57" width="50" height="20" fill="none" stroke="#fff" stroke-width="2"/>
+        <line x1="3" y1="57" x2="397" y2="57" stroke="#fff" stroke-width="1" stroke-dasharray="4 5" opacity=".5"/>
+        <rect x="184" y="34" width="32" height="23" fill="#e6ecf1" fill-opacity=".35" stroke="#e8453c" stroke-width="3"/>
+        <circle cx="200" cy="258" r="3.5" fill="#fff"/>
+        <circle cx="100" cy="258" r="3.5" fill="#fff"/>
+        <circle cx="300" cy="258" r="3.5" fill="#fff"/>
+        <text x="200" y="392" text-anchor="middle" fill="#fff" font-size="12" opacity=".8">centre line</text>
+        <g id="marks"></g>
+      </svg>
+      <p class="hint">Tap an existing counter to remove it.</p>
+    </div>
+    <div class="side">
+      <div class="card stat"><span class="dot" style="background:var(--green)"></span><span class="l">Shot in Goal</span><span class="n" id="cg">0</span></div>
+      <div class="card stat"><span class="dot" style="background:var(--red)"></span><span class="l">Shot on target (blocked)</span><span class="n" id="cr">0</span></div>
+      <div class="card stat"><span class="dot" style="background:var(--blue)"></span><span class="l">Shot off target</span><span class="n" id="cb">0</span></div>
+      <div class="card stat"><span class="dot" style="background:#111;box-shadow:0 0 0 1px #8a96a0"></span><span class="l">Possession lost</span><span class="n" id="ck">0</span></div>
+      <div class="card">
+        <div class="stat total"><span class="l">Total shots</span><span class="n" id="ct">0</span></div>
+        <div class="acc" style="margin-top:8px"><span>Goal rate</span><b id="rate">–</b></div>
+        <div class="acc"><span>On target*</span><b id="ontarget">–</b></div>
+        <p class="hint" style="margin-bottom:0">Goal rate = goals ÷ all shots. *On target counts goals + blocked shots (they were heading at goal).</p>
+      </div>
+      <div class="btns"><button id="undo">Undo</button><button id="clear">Clear all</button></div>
+      <div class="btns"><button id="export">Export results as screenshot</button></div>
+      <p class="hint" id="msg" role="status" style="margin-top:0"></p>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var colors={g:"#22a447",r:"#e04545",b:"#2f7de1"};
+  var type="g", shots=[];
+  var svg=document.getElementById("court"), marks=document.getElementById("marks");
+  var NS="http://www.w3.org/2000/svg";
+
+  function choose(b){
+    type=b.getAttribute("data-t");
+    document.querySelectorAll(".pick").forEach(function(p){
+      var on=p===b;
+      p.classList.toggle("active",on);
+      p.setAttribute("aria-pressed",on?"true":"false");
+    });
+  }
+  document.querySelectorAll(".pick").forEach(function(b){
+    b.setAttribute("type","button");
+    b.addEventListener("click",function(){choose(b)});
+    b.addEventListener("touchend",function(e){e.preventDefault();choose(b)});
+  });
+
+  function toSvg(e){
+    var pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  svg.addEventListener("click",function(e){
+    var p=toSvg(e);
+    if(p.y>398||p.y<0||p.x<0||p.x>400) return;
+    for(var i=shots.length-1;i>=0;i--){
+      var s=shots[i];
+      if(Math.hypot(s.x-p.x,s.y-p.y)<=11){shots.splice(i,1);render();return;}
+    }
+    shots.push({x:p.x,y:p.y,t:type});
+    render();
+  });
+
+  document.getElementById("undo").onclick=function(){shots.pop();render();};
+  document.getElementById("clear").onclick=function(){
+    shots=[];render();
+  };
+
+  function render(){
+    marks.innerHTML="";
+    shots.forEach(function(s){
+      if(s.t==="k"){
+        var d="M"+(s.x-8)+" "+(s.y-8)+"L"+(s.x+8)+" "+(s.y+8)+"M"+(s.x+8)+" "+(s.y-8)+"L"+(s.x-8)+" "+(s.y+8);
+        [["#fff",8],["#111",4]].forEach(function(st){
+          var p=document.createElementNS(NS,"path");
+          p.setAttribute("d",d);p.setAttribute("fill","none");p.setAttribute("stroke",st[0]);
+          p.setAttribute("stroke-width",st[1]);p.setAttribute("stroke-linecap","round");
+          marks.appendChild(p);
+        });
+        return;
+      }
+      var c=document.createElementNS(NS,"circle");
+      c.setAttribute("cx",s.x);c.setAttribute("cy",s.y);c.setAttribute("r",9);
+      c.setAttribute("fill",colors[s.t]);c.setAttribute("stroke","#fff");c.setAttribute("stroke-width",2.5);
+      marks.appendChild(c);
+    });
+    var n={g:0,r:0,b:0,k:0};
+    shots.forEach(function(s){n[s.t]++});
+    var t=n.g+n.r+n.b;
+    document.getElementById("ck").textContent=n.k;
+    document.getElementById("cg").textContent=n.g;
+    document.getElementById("cr").textContent=n.r;
+    document.getElementById("cb").textContent=n.b;
+    document.getElementById("ct").textContent=t;
+    document.getElementById("rate").textContent=t?Math.round(n.g/t*100)+"%":"–";
+    document.getElementById("ontarget").textContent=t?Math.round((n.g+n.r)/t*100)+"%":"–";
+  }
+  function rr(ctx,x,y,w,h,r){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+  }
+
+  function makeImage(){
+    return new Promise(function(res,rej){
+      var clone=svg.cloneNode(true);
+      clone.setAttribute("xmlns",NS);clone.setAttribute("width",400);clone.setAttribute("height",420);
+      var xml=new XMLSerializer().serializeToString(clone);
+      var img=new Image();
+      img.onerror=function(){rej(new Error("image"))};
+      img.onload=function(){
+        var c=document.createElement("canvas");c.width=1920;c.height=1440;
+        var x=c.getContext("2d");x.scale(2,2);
+        var F="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+        x.fillStyle="#ffffff";x.fillRect(0,0,960,720);
+        x.fillStyle="#1b2733";x.textBaseline="middle";x.textAlign="left";
+        x.font="700 28px "+F;x.fillText("Floorball Shot Tracker",40,40);
+        // player names
+        var ins=document.querySelectorAll("#players input");
+        for(var i=0;i<3;i++){
+          var bx=40+i*300;
+          rr(x,bx,80,280,50,10);x.fillStyle="#f4f6f8";x.fill();x.strokeStyle="#d5dce2";x.lineWidth=1.5;x.stroke();
+          x.fillStyle="#1b2733";x.font="600 20px "+F;
+          x.fillText(ins[i].value.trim()||"Player "+(i+1),bx+16,105,248);
+        }
+        // court
+        x.drawImage(img,40,160,500,525);
+        // stats
+        var n={g:0,r:0,b:0,k:0};shots.forEach(function(s){n[s.t]++});
+        var t=n.g+n.r+n.b;
+        var rows=[["Shot in Goal",n.g,"#22a447"],["Shot on target (blocked)",n.r,"#e04545"],["Shot off target",n.b,"#2f7de1"],["Possession lost",n.k,"#111111"]];
+        rows.forEach(function(r,k){
+          var y=200+k*80;
+          rr(x,580,y-34,340,68,12);x.fillStyle="#f4f6f8";x.fill();x.strokeStyle="#d5dce2";x.stroke();
+          x.beginPath();x.arc(606,y-2,10,0,Math.PI*2);x.fillStyle=r[2];x.fill();
+          x.fillStyle="#1b2733";x.textAlign="left";x.font="600 17px "+F;x.fillText(r[0],628,y-2,200);
+          x.textAlign="right";x.font="700 40px "+F;x.fillText(String(r[1]),902,y-2);
+        });
+        rr(x,580,495,340,175,12);x.fillStyle="#f4f6f8";x.fill();x.strokeStyle="#d5dce2";x.stroke();
+        x.fillStyle="#1b2733";x.textAlign="left";x.font="600 19px "+F;x.fillText("Total shots",600,530);
+        x.textAlign="right";x.font="700 36px "+F;x.fillText(String(t),902,530);
+        x.fillStyle="#5d6b78";x.textAlign="left";x.font="500 17px "+F;
+        x.fillText("Goal rate",600,585);
+        x.fillText("On target (goals + blocked)",600,625);
+        x.textAlign="right";x.fillStyle="#1b2733";x.font="700 18px "+F;
+        x.fillText(t?Math.round(n.g/t*100)+"%":"–",902,585);
+        x.fillText(t?Math.round((n.g+n.r)/t*100)+"%":"–",902,625);
+        c.toBlob(function(b){b?res(b):rej(new Error("blob"))},"image/png");
+      };
+      img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
+    });
+  }
+
+  document.getElementById("export").onclick=async function(){
+    var msg=document.getElementById("msg");msg.textContent="";
+    try{
+      var dl=window.claude&&await window.claude.use("downloads");
+      if(!dl){msg.textContent="Saving isn't available in this view.";return;}
+      var blob=await makeImage();
+      await dl.save({filename:"floorball-shot-results.png",data:blob});
+      msg.textContent="Screenshot saved.";
+    }catch(err){
+      if(err&&err.code==="declined") return;
+      msg.textContent="Couldn't export the screenshot. Please try again.";
+    }
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
+
+</body></html>
